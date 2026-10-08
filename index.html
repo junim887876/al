@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Inquilino</title>
 
-    <!-- App ID do OneSignal -->
     <script>
         const ONESIGNAL_APP_ID = "88e84def-3c2b-46f3-923e-b2178044f384";
     </script>
 
-    <!-- Configurações PWA e Safe Area do iPhone -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,17 +16,14 @@
     <meta name="apple-mobile-web-app-title" content="Inquilino">
     <link rel="apple-touch-icon" href="./logo_nova.jpg">
 
-    <!-- Tailwind CSS & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Three.js + Loader + Controls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-    <!-- OneSignal Web Push SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -134,7 +129,6 @@
 </head>
 <body class="antialiased">
 
-    <!-- TELA DE LOGIN DO INQUILINO -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 safe-padding-top safe-padding-bottom transition-opacity duration-300">
         <div class="mb-8 text-center flex flex-col items-center">
             <div class="p-1 rounded-2xl bg-gradient-to-b from-brand-accent/30 to-transparent mb-4 shadow-[0_0_30px_rgba(63,185,80,0.2)]">
@@ -156,18 +150,14 @@
         </div>
     </div>
 
-    <!-- CANVAS 3D (CASA, POSTE E FIOS) -->
     <div id="canvas-container" class="hidden"></div>
 
-    <!-- CAMADA DE CONTEÚDO PRINCIPAL -->
     <div id="app-screen" class="hidden">
         <div id="content-layer">
             <div class="hero-spacer"></div>
 
-            <!-- VISÃO: MEU ALUGUEL -->
             <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-[2rem] p-4 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in relative">
                 
-                <!-- IDENTIFICAÇÃO E ENDEREÇO DO IMÓVEL -->
                 <div class="glass-box p-3.5 flex items-center gap-3 mb-3.5 border-l-4 border-l-brand-accent">
                     <div class="w-9 h-9 rounded-lg bg-brand-accent/15 border border-brand-accent/30 flex items-center justify-center text-brand-accent text-sm shrink-0">
                         <i class="fa-solid fa-house-chimney"></i>
@@ -181,10 +171,8 @@
                     </div>
                 </div>
 
-                <!-- CARDS DE VALORES -->
                 <div class="space-y-2.5">
                     
-                    <!-- CARD ALUGUEL -->
                     <div class="glass-box p-3.5 flex justify-between items-center border-l-4 border-l-brand-blue">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-lg bg-brand-blue/15 flex items-center justify-center text-brand-blue text-xs">
@@ -198,7 +186,6 @@
                         <span class="text-[9px] font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20 px-2 py-0.5 rounded-md uppercase">Fixo</span>
                     </div>
 
-                    <!-- CARD ENERGIA COM RAIO ANIMADO -->
                     <div class="glass-box p-3.5 flex justify-between items-center border-l-4 border-l-brand-orange">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-lg bg-brand-orange/15 flex items-center justify-center text-brand-orange text-xs">
@@ -214,7 +201,6 @@
                         </span>
                     </div>
 
-                    <!-- CARD TOTAL DO MÊS (EXIBIÇÃO DINÂMICA VIA COLUNA E COM CLIQUE PARA COPIAR PIX) -->
                     <div id="card-total-container" class="hidden glass-box p-4 bg-gradient-to-br from-[#161b22] to-[#1d2430] border border-brand-accent/30 text-center cursor-pointer active:scale-98 transition-transform shadow-lg shadow-brand-accent/5" onclick="copiarPix()">
                         <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide flex items-center justify-center gap-1">
                             <i class="fa-solid fa-circle-dollar-to-slot text-brand-accent"></i> Total a Pagar no Mês
@@ -228,7 +214,6 @@
                 </div>
             </main>
 
-            <!-- VISÃO: PERFIL DO INQUILINO -->
             <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-[2rem] p-4 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in flex flex-col items-center">
                 <img src="./logo_nova.jpg" alt="Logo" class="w-16 h-16 rounded-full object-cover border-2 border-brand-blue shadow-[0_0_20px_rgba(88,166,255,0.2)] mb-2 mt-1">
                 <h2 id="prof-nome" class="text-base font-bold text-white uppercase">Inquilino</h2>
@@ -270,7 +255,6 @@
                 </button>
             </main>
 
-            <!-- NAVEGAÇÃO INFERIOR FIXA -->
             <nav class="fixed bottom-0 w-full max-w-[420px] bg-[#0d1117]/90 backdrop-blur-xl border-t border-white/10 p-2.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] flex justify-around items-center z-30">
                 <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-brand-accent transition-colors w-1/2">
                     <i class="fa-solid fa-file-invoice-dollar mb-0.5 text-base"></i>
@@ -383,6 +367,15 @@
                 document.getElementById('prof-vencimento').innerText = `Todo dia ${currentHouse.diaExibicao}`;
             }
 
+            // VINCULA O USER LOGIN AO ONESIGNAL (SOLUÇÃO DO ERROR: All included players are not subscribed)
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    const userLoginClean = currentHouse.login.toString().trim().toLowerCase();
+                    await OneSignal.login(userLoginClean);
+                    await OneSignal.Notifications.requestPermission();
+                });
+            }
+
             // Lógica de Exibição Condicional pela Coluna E
             const hojeDia = new Date().getDate(); // Obtém o dia do mês atual
             const cardTotal = document.getElementById('card-total-container');
@@ -441,13 +434,21 @@ Vencimento: Todo dia ${currentHouse.diaExibicao || 10}
 
         function solicitarNotificacao() {
             if (window.OneSignalDeferred) {
-                window.OneSignalDeferred.push(function(OneSignal) {
-                    OneSignal.Notifications.requestPermission();
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    if (currentHouse && currentHouse.login) {
+                        await OneSignal.login(currentHouse.login.toString().trim().toLowerCase());
+                    }
+                    await OneSignal.Notifications.requestPermission();
                 });
             }
         }
 
         function logout() {
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    await OneSignal.logout();
+                });
+            }
             localStorage.removeItem('inquilino_login');
             window.location.reload();
         }
