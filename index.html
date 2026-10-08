@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Área do Inquilino</title>
+    <title>Portal do Inquilino</title>
 
-    <!-- Configuração do App ID do OneSignal -->
+    <!-- App ID do OneSignal -->
     <script>
         const ONESIGNAL_APP_ID = "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f";
     </script>
 
-    <!-- PWA Settings / iPhone iOS safe area -->
+    <!-- Configurações PWA e Safe Area do iPhone -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,7 +28,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-    <!-- OneSignal SDK -->
+    <!-- OneSignal Web Push SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -59,7 +59,6 @@
     </script>
 
     <style>
-        /* Ajustes Nativo iOS / Dynamic Island iPhone 14 Pro */
         :root {
             --sat: env(safe-area-inset-top, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
@@ -79,26 +78,32 @@
         }
 
         * { touch-action: manipulation; }
-
         ::-webkit-scrollbar { display: none; }
 
-        .safe-padding-top { padding-top: calc(var(--sat) + 1rem); }
+        .safe-padding-top { padding-top: calc(var(--sat) + 0.75rem); }
         .safe-padding-bottom { padding-bottom: calc(var(--sab) + 5rem); }
 
         .glass-box {
-            background: rgba(22, 27, 34, 0.85);
+            background: rgba(22, 27, 34, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 1.5rem;
+            border-radius: 1.25rem;
         }
+
+        .skeleton-loading {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.5s infinite;
+        }
+        @keyframes skeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         #canvas-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
-            height: 55vh;
+            height: 52vh;
             z-index: 1;
             pointer-events: auto;
         }
@@ -107,7 +112,7 @@
             position: relative;
             z-index: 10;
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             margin: 0 auto;
             min-height: 100vh;
             display: flex;
@@ -115,21 +120,21 @@
         }
 
         .hero-spacer {
-            height: 42vh;
+            height: 40vh;
             width: 100%;
             pointer-events: none;
         }
 
         .fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(12px); } }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
 
         .spinner-loader {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-left-color: #3fb950;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-left-color: #000;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.8s linear infinite;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.7s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -139,25 +144,26 @@
     <!-- TELA DE LOGIN DO INQUILINO -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 safe-padding-top safe-padding-bottom transition-opacity duration-300">
         <div class="mb-8 text-center flex flex-col items-center">
-            <div class="w-20 h-20 rounded-2xl bg-gradient-to-b from-brand-accent/20 to-transparent p-1 mb-4 border border-brand-accent/30 shadow-[0_0_25px_rgba(63,185,80,0.15)] flex items-center justify-center">
-                <i class="fa-solid fa-house-user text-brand-accent text-3xl"></i>
+            <div class="p-1 rounded-2xl bg-gradient-to-b from-brand-accent/30 to-transparent mb-4 shadow-[0_0_30px_rgba(63,185,80,0.2)]">
+                <img src="./logo_nova.jpg" alt="Logo" class="w-20 h-20 rounded-2xl object-cover border border-white/10">
             </div>
-            <h1 class="text-2xl font-bold text-white mb-1">Área do Inquilino</h1>
-            <p class="text-xs text-gray-400">Digite seu código/login de acesso</p>
+
+            <h1 class="text-xl font-extrabold text-white mb-1">Área do Inquilino</h1>
+            <p class="text-xs text-gray-400 font-medium">Acesse sua fatura e contrato de locação</p>
         </div>
 
-        <div class="w-full max-w-xs space-y-4">
-            <input type="text" id="user-input" placeholder="Seu Login (ex: jj)" autocomplete="off" class="w-full bg-[#161b22] border border-white/10 rounded-xl px-5 py-4 text-center text-white placeholder-gray-500 focus:outline-none focus:border-brand-accent transition-colors" onkeypress="if(event.key === 'Enter') autenticarInquilino()">
+        <div class="w-full max-w-xs space-y-3.5">
+            <input type="text" id="user-input" placeholder="Escreva seu primeiro nome" autocomplete="off" class="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3.5 text-center text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-accent transition-colors" onkeypress="if(event.key === 'Enter') autenticarInquilino()">
             
-            <button id="login-btn" onclick="autenticarInquilino()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black font-extrabold py-4 rounded-xl active:scale-95 transition-all flex justify-center items-center gap-2 shadow-lg shadow-brand-accent/20">
-                <div id="login-spinner" class="spinner-loader border-black/20 border-left-black hidden"></div>
+            <button id="login-btn" onclick="autenticarInquilino()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black font-extrabold py-3.5 rounded-xl active:scale-95 transition-all text-sm flex justify-center items-center gap-2 shadow-lg shadow-brand-accent/20">
+                <div id="login-spinner" class="spinner-loader hidden"></div>
                 <span id="login-btn-text">Entrar na Conta</span>
             </button>
-            <p id="login-error" class="text-red-400 text-xs text-center font-medium hidden">Login não encontrado na Coluna D.</p>
+            <p id="login-error" class="text-red-400 text-xs text-center font-medium hidden">Nome não encontrado na planilha.</p>
         </div>
     </div>
 
-    <!-- CANVAS 3D (CASA, POSTE E CABOS) -->
+    <!-- CANVAS 3D (CASA, POSTE E FIOS) -->
     <div id="canvas-container" class="hidden"></div>
 
     <!-- CAMADA DE CONTEÚDO PRINCIPAL -->
@@ -165,109 +171,124 @@
         <div id="content-layer">
             <div class="hero-spacer"></div>
 
-            <!-- VISÃO: ALUGUEL E FATURA -->
-            <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-[2.5rem] p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in relative">
+            <!-- VISÃO: MEU ALUGUEL -->
+            <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-[2rem] p-4 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in relative">
                 
-                <!-- IDENTIFICAÇÃO DO IMÓVEL -->
-                <div class="glass-box p-4 flex items-center gap-3.5 mb-5">
-                    <div class="w-11 h-11 rounded-xl bg-brand-accent/15 border border-brand-accent/30 flex items-center justify-center text-brand-accent text-lg">
-                        <i class="fa-solid fa-location-dot"></i>
+                <!-- IDENTIFICAÇÃO E ENDEREÇO DO IMÓVEL -->
+                <div class="glass-box p-3.5 flex items-center gap-3 mb-3.5 border-l-4 border-l-brand-accent">
+                    <div class="w-9 h-9 rounded-lg bg-brand-accent/15 border border-brand-accent/30 flex items-center justify-center text-brand-accent text-sm shrink-0">
+                        <i class="fa-solid fa-house-chimney"></i>
                     </div>
-                    <div>
-                        <h2 id="disp-endereco" class="text-sm font-bold text-white leading-tight">Carregando...</h2>
-                        <p class="text-[11px] text-gray-400 font-medium mt-0.5">Imóvel Locado</p>
+                    <div class="overflow-hidden">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Imóvel Locado</p>
+                        <h2 id="disp-endereco" class="text-xs font-bold text-white truncate leading-tight mt-0.5">
+                            <span class="inline-block w-24 h-3 rounded skeleton-loading"></span>
+                        </h2>
                     </div>
-                    <div class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1">
+                    <div class="ml-auto bg-green-500/10 text-green-400 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-green-500/20 flex items-center gap-1 shrink-0">
                         <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Ativo
                     </div>
                 </div>
 
-                <!-- CARDS DE VALORES -->
-                <div class="space-y-3.5">
+                <!-- CARDS COMPACTOS DE VALORES -->
+                <div class="space-y-2.5">
                     
-                    <!-- ALUGUEL -->
-                    <div class="glass-box p-4 flex justify-between items-center border-l-4 border-l-brand-blue">
-                        <div>
-                            <p class="text-xs text-gray-400 font-medium">Aluguel Mensal</p>
-                            <h3 id="disp-aluguel" class="text-xl font-black text-white mt-0.5">R$ 0,00</h3>
+                    <!-- CARD ALUGUEL -->
+                    <div class="glass-box p-3.5 flex justify-between items-center border-l-4 border-l-brand-blue">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-brand-blue/15 flex items-center justify-center text-brand-blue text-xs">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-semibold uppercase">Aluguel Mensal</p>
+                                <h3 id="disp-aluguel" class="text-base font-extrabold text-white mt-0.5">R$ 0,00</h3>
+                            </div>
                         </div>
-                        <span class="text-[10px] font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20 px-2.5 py-1 rounded-full uppercase">Fixo</span>
+                        <span class="text-[9px] font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20 px-2 py-0.5 rounded-md uppercase">Fixo</span>
                     </div>
 
-                    <!-- ENERGIA -->
-                    <div class="glass-box p-4 flex justify-between items-center border-l-4 border-l-brand-accent">
-                        <div>
-                            <p class="text-xs text-gray-400 font-medium">Consumo de Energia</p>
-                            <h3 id="disp-energia" class="text-xl font-black text-white mt-0.5">R$ 0,00</h3>
+                    <!-- CARD ENERGIA COM RAIO ANIMADO -->
+                    <div class="glass-box p-3.5 flex justify-between items-center border-l-4 border-l-brand-orange">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-brand-orange/15 flex items-center justify-center text-brand-orange text-xs">
+                                <i class="fa-solid fa-bolt text-brand-orange animate-pulse"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-semibold uppercase flex items-center gap-1">
+                                    Energia do Mês
+                                </p>
+                                <h3 id="disp-energia" class="text-base font-extrabold text-white mt-0.5">R$ 0,00</h3>
+                            </div>
                         </div>
-                        <span class="text-[10px] font-bold bg-brand-accent/10 text-brand-accent border border-brand-accent/20 px-2.5 py-1 rounded-full uppercase">Energia</span>
+                        <span class="text-[9px] font-bold bg-brand-orange/10 text-brand-orange border border-brand-orange/20 px-2 py-0.5 rounded-md uppercase flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-[8px]"></i> Variável
+                        </span>
                     </div>
 
-                    <!-- TOTAL -->
-                    <div class="glass-box p-5 bg-gradient-to-br from-[#161b22] to-[#1f2838] border border-white/10 text-center">
-                        <p class="text-xs text-gray-400 font-medium">Total do Mês a Pagar</p>
-                        <h2 id="disp-total" class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-200 mt-1">R$ 0,00</h2>
+                    <!-- CARD TOTAL DO MÊS -->
+                    <div class="glass-box p-4 bg-gradient-to-br from-[#161b22] to-[#1d2430] border border-white/10 text-center">
+                        <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Total a Pagar no Mês</p>
+                        <h2 id="disp-total" class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-200 mt-0.5">R$ 0,00</h2>
                     </div>
 
-                    <button onclick="copiarPix()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black py-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-accent/10">
-                        <i class="fa-solid fa-copy text-base"></i> <span id="pix-btn-text">Copiar Chave PIX</span>
+                    <!-- BOTÃO PIX -->
+                    <button onclick="copiarPix()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black py-3.5 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-accent/15 mt-1">
+                        <i class="fa-solid fa-copy text-sm"></i> <span id="pix-btn-text">Copiar Código PIX</span>
                     </button>
                 </div>
             </main>
 
             <!-- VISÃO: PERFIL DO INQUILINO -->
-            <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-[2.5rem] p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in flex flex-col items-center">
-                <div class="w-20 h-20 rounded-full bg-brand-blue/15 border-2 border-brand-blue shadow-[0_0_20px_rgba(88,166,255,0.2)] mb-3 flex items-center justify-center text-brand-blue text-3xl mt-2">
-                    <i class="fa-solid fa-user-check"></i>
-                </div>
-                <h2 id="prof-nome" class="text-lg font-bold text-white uppercase">Inquilino</h2>
-                <p class="text-xs text-gray-400 font-medium mb-5">Contrato de Locação Ativo</p>
+            <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-[2rem] p-4 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in flex flex-col items-center">
+                <img src="./logo_nova.jpg" alt="Logo" class="w-16 h-16 rounded-full object-cover border-2 border-brand-blue shadow-[0_0_20px_rgba(88,166,255,0.2)] mb-2 mt-1">
+                <h2 id="prof-nome" class="text-base font-bold text-white uppercase">Inquilino</h2>
+                <p class="text-[11px] text-gray-400 font-medium mb-4">Contrato de Locação Ativo</p>
 
-                <div class="w-full glass-box p-4 mb-4 space-y-3 text-xs">
-                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
-                        <span class="text-gray-400">Usuário de Acesso (Coluna D)</span>
-                        <span id="prof-user" class="font-semibold text-brand-accent">---</span>
+                <div class="w-full glass-box p-3.5 mb-3.5 space-y-2.5 text-xs">
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="text-gray-400 text-[11px]">Nome de Acesso</span>
+                        <span id="prof-user" class="font-semibold text-brand-accent text-[11px]">---</span>
                     </div>
-                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
-                        <span class="text-gray-400">Endereço do Imóvel</span>
-                        <span id="prof-endereco" class="font-semibold text-white">---</span>
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="text-gray-400 text-[11px]">Endereço do Imóvel</span>
+                        <span id="prof-endereco" class="font-semibold text-white text-[11px] truncate max-w-[180px]">---</span>
                     </div>
-                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
-                        <span class="text-gray-400">Vencimento Mensal</span>
-                        <span class="font-semibold text-white">Todo dia 10</span>
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="text-gray-400 text-[11px]">Vencimento Mensal</span>
+                        <span class="font-semibold text-white text-[11px]">Todo dia 10</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-400">Status do Contrato</span>
-                        <span class="text-brand-accent font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-circle-check"></i> Vigente
+                        <span class="text-gray-400 text-[11px]">Status do Contrato</span>
+                        <span class="text-brand-accent font-bold text-[11px] flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i> Vigente
                         </span>
                     </div>
                 </div>
 
-                <div class="w-full space-y-2.5 mb-6">
-                    <button onclick="downloadContrato()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-3.5 px-4 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
-                        <i class="fa-solid fa-file-pdf text-red-400 text-base"></i> Baixar Contrato de Aluguel (PDF)
+                <div class="w-full space-y-2 mb-4">
+                    <button onclick="downloadContrato()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-3 px-3.5 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+                        <i class="fa-solid fa-file-pdf text-red-400 text-sm"></i> Baixar Contrato em PDF
                     </button>
 
-                    <button onclick="solicitarNotificacao()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-xl py-3.5 px-4 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
-                        <i class="fa-solid fa-bell text-brand-accent text-base"></i> Ativar Notificações de Cobrança
+                    <button onclick="solicitarNotificacao()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-xl py-3 px-3.5 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+                        <i class="fa-solid fa-bell text-brand-accent text-sm"></i> Notificações de Vencimento
                     </button>
                 </div>
 
-                <button onclick="logout()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3.5 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mt-auto">
+                <button onclick="logout()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mt-auto">
                     <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
                 </button>
             </main>
 
-            <!-- NAVEGAÇÃO INFERIOR FIXA (iOS / Safe Area) -->
-            <nav class="fixed bottom-0 w-full max-w-[440px] bg-[#0d1117]/90 backdrop-blur-xl border-t border-white/10 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] flex justify-around items-center z-30">
+            <!-- NAVEGAÇÃO INFERIOR FIXA -->
+            <nav class="fixed bottom-0 w-full max-w-[420px] bg-[#0d1117]/90 backdrop-blur-xl border-t border-white/10 p-2.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] flex justify-around items-center z-30">
                 <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-brand-accent transition-colors w-1/2">
-                    <i class="fa-solid fa-file-invoice-dollar mb-1 text-lg"></i>
+                    <i class="fa-solid fa-file-invoice-dollar mb-0.5 text-base"></i>
                     <span class="text-[10px] font-bold">Meu Aluguel</span>
                 </button>
-                <div class="w-[1px] h-7 bg-white/10"></div>
+                <div class="w-[1px] h-6 bg-white/10"></div>
                 <button id="nav-profile" onclick="switchNav('profile')" class="flex flex-col items-center text-gray-500 transition-colors w-1/2">
-                    <i class="fa-regular fa-user mb-1 text-lg"></i>
+                    <i class="fa-regular fa-user mb-0.5 text-base"></i>
                     <span class="text-[10px] font-bold">Perfil & Contrato</span>
                 </button>
             </nav>
@@ -281,12 +302,11 @@
 
         let currentHouse = null;
 
-        // Trava de gestos de zoom no iOS
         document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
         document.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
 
         function parseToNumber(val) {
-            if (val === null || val === undefined) return 0;
+            if (val === null || val === undefined || val === '') return 0;
             let numStr = val.toString().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
             let num = parseFloat(numStr);
             return isNaN(num) ? 0 : num;
@@ -359,14 +379,14 @@
             const vEnergia = parseToNumber(currentHouse.energia);
             const total = vAluguel + vEnergia;
 
-            document.getElementById('disp-endereco').innerText = currentHouse.casa; //[cite: 1]
-            document.getElementById('disp-aluguel').innerText = formatCurrency(currentHouse.aluguel); //[cite: 1]
-            document.getElementById('disp-energia').innerText = formatCurrency(currentHouse.energia); //[cite: 1]
+            document.getElementById('disp-endereco').innerText = currentHouse.casa || 'Endereço Indisponível';
+            document.getElementById('disp-aluguel').innerText = formatCurrency(currentHouse.aluguel);
+            document.getElementById('disp-energia').innerText = formatCurrency(currentHouse.energia);
             document.getElementById('disp-total').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            document.getElementById('prof-nome').innerText = currentHouse.login; //[cite: 1]
-            document.getElementById('prof-user').innerText = currentHouse.login; //[cite: 1]
-            document.getElementById('prof-endereco').innerText = currentHouse.casa; //[cite: 1]
+            document.getElementById('prof-nome').innerText = currentHouse.login;
+            document.getElementById('prof-user').innerText = currentHouse.login;
+            document.getElementById('prof-endereco').innerText = currentHouse.casa;
 
             init3DScene();
         }
@@ -393,7 +413,7 @@
         function copiarPix() {
             navigator.clipboard.writeText(PIX_KEY).then(() => {
                 document.getElementById('pix-btn-text').innerText = "Copiado! Abra seu banco";
-                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Chave PIX"; }, 3000);
+                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Código PIX"; }, 3000);
             });
         }
 
@@ -434,7 +454,7 @@ Vencimento: Todo dia 10
             }
         };
 
-        // THREE.JS - CENA 3D DA CASA, POSTE E FIOS ELÉTRICOS FLUINDO
+        // THREE.JS - CENA 3D DA CASA, POSTE E FIOS
         let scene, camera, renderer, controls;
         let energyPath, energyDot, energyGlow;
 
@@ -504,7 +524,6 @@ Vencimento: Todo dia 10
 
             buildPole();
 
-            // Curva dos cabos de energia (Poste -> Casa)
             energyPath = new THREE.CatmullRomCurve3([
                 new THREE.Vector3(-6, 5.3, 0.7),
                 new THREE.Vector3(-3.8, 3.2, 0.9),
@@ -516,7 +535,6 @@ Vencimento: Todo dia 10
             const wireMesh = new THREE.Mesh(tubeGeo, tubeMat);
             scene.add(wireMesh);
 
-            // Esfera de pulso elétrico fluindo pelo cabo
             energyDot = new THREE.Mesh(
                 new THREE.SphereGeometry(0.12, 16, 16),
                 new THREE.MeshBasicMaterial({ color: 0x00aaff })
@@ -529,7 +547,6 @@ Vencimento: Todo dia 10
                 requestAnimationFrame(animate);
                 controls.update();
 
-                // Animação de fluxo do poste até a casa
                 const speed = 2400;
                 const t = (Date.now() % speed) / speed;
                 const pos = energyPath.getPointAt(t);
