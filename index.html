@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Área do Inquilino</title>
 
-    <!-- PWA Settings -->
+    <!-- Configuração do App ID do OneSignal -->
+    <script>
+        const ONESIGNAL_APP_ID = "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f";
+    </script>
+
+    <!-- PWA Settings / iPhone iOS safe area -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +34,7 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f",
+          appId: ONESIGNAL_APP_ID,
           serviceWorkerPath: "sw.js",
           serviceWorkerParam: { scope: "/" },
         });
@@ -54,7 +59,12 @@
     </script>
 
     <style>
-        /* Trava contra duplo toque e zoom no mobile */
+        /* Ajustes Nativo iOS / Dynamic Island iPhone 14 Pro */
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
+
         html, body {
             touch-action: pan-x pan-y;
             -webkit-touch-callout: none;
@@ -65,18 +75,22 @@
             overflow-x: hidden;
             overflow-y: auto;
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
         }
 
         * { touch-action: manipulation; }
 
         ::-webkit-scrollbar { display: none; }
 
+        .safe-padding-top { padding-top: calc(var(--sat) + 1rem); }
+        .safe-padding-bottom { padding-bottom: calc(var(--sab) + 5rem); }
+
         .glass-box {
-            background: rgba(22, 27, 34, 0.82);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 1.25rem;
+            border-radius: 1.5rem;
         }
 
         #canvas-container {
@@ -84,7 +98,7 @@
             top: 0;
             left: 0;
             width: 100vw;
-            height: 52vh;
+            height: 55vh;
             z-index: 1;
             pointer-events: auto;
         }
@@ -101,13 +115,13 @@
         }
 
         .hero-spacer {
-            height: 40vh;
+            height: 42vh;
             width: 100%;
             pointer-events: none;
         }
 
-        .fade-in { animation: fadeIn 0.35s ease-out forwards; opacity: 0; }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(8px); } }
+        .fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(12px); } }
 
         .spinner-loader {
             border: 3px solid rgba(255,255,255,0.1);
@@ -123,7 +137,7 @@
 <body class="antialiased">
 
     <!-- TELA DE LOGIN DO INQUILINO -->
-    <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 transition-opacity duration-300">
+    <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 safe-padding-top safe-padding-bottom transition-opacity duration-300">
         <div class="mb-8 text-center flex flex-col items-center">
             <div class="w-20 h-20 rounded-2xl bg-gradient-to-b from-brand-accent/20 to-transparent p-1 mb-4 border border-brand-accent/30 shadow-[0_0_25px_rgba(63,185,80,0.15)] flex items-center justify-center">
                 <i class="fa-solid fa-house-user text-brand-accent text-3xl"></i>
@@ -135,7 +149,7 @@
         <div class="w-full max-w-xs space-y-4">
             <input type="text" id="user-input" placeholder="Seu Login (ex: jj)" autocomplete="off" class="w-full bg-[#161b22] border border-white/10 rounded-xl px-5 py-4 text-center text-white placeholder-gray-500 focus:outline-none focus:border-brand-accent transition-colors" onkeypress="if(event.key === 'Enter') autenticarInquilino()">
             
-            <button id="login-btn" onclick="autenticarInquilino()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black font-extrabold py-4 rounded-xl active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button id="login-btn" onclick="autenticarInquilino()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black font-extrabold py-4 rounded-xl active:scale-95 transition-all flex justify-center items-center gap-2 shadow-lg shadow-brand-accent/20">
                 <div id="login-spinner" class="spinner-loader border-black/20 border-left-black hidden"></div>
                 <span id="login-btn-text">Entrar na Conta</span>
             </button>
@@ -143,7 +157,7 @@
         </div>
     </div>
 
-    <!-- CANVAS 3D (CASA E POSTE) -->
+    <!-- CANVAS 3D (CASA, POSTE E CABOS) -->
     <div id="canvas-container" class="hidden"></div>
 
     <!-- CAMADA DE CONTEÚDO PRINCIPAL -->
@@ -152,7 +166,7 @@
             <div class="hero-spacer"></div>
 
             <!-- VISÃO: ALUGUEL E FATURA -->
-            <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-3xl p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.8)] pb-28 fade-in relative">
+            <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-[2.5rem] p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in relative">
                 
                 <!-- IDENTIFICAÇÃO DO IMÓVEL -->
                 <div class="glass-box p-4 flex items-center gap-3.5 mb-5">
@@ -202,7 +216,7 @@
             </main>
 
             <!-- VISÃO: PERFIL DO INQUILINO -->
-            <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-3xl p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.8)] pb-28 fade-in flex flex-col items-center">
+            <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-[2.5rem] p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] safe-padding-bottom fade-in flex flex-col items-center">
                 <div class="w-20 h-20 rounded-full bg-brand-blue/15 border-2 border-brand-blue shadow-[0_0_20px_rgba(88,166,255,0.2)] mb-3 flex items-center justify-center text-brand-blue text-3xl mt-2">
                     <i class="fa-solid fa-user-check"></i>
                 </div>
@@ -245,8 +259,8 @@
                 </button>
             </main>
 
-            <!-- NAVEGAÇÃO INFERIOR FIXA -->
-            <nav class="fixed bottom-0 w-full max-w-[440px] bg-[#0d1117] border-t border-white/10 p-3 pb-6 flex justify-around items-center z-30">
+            <!-- NAVEGAÇÃO INFERIOR FIXA (iOS / Safe Area) -->
+            <nav class="fixed bottom-0 w-full max-w-[440px] bg-[#0d1117]/90 backdrop-blur-xl border-t border-white/10 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] flex justify-around items-center z-30">
                 <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-brand-accent transition-colors w-1/2">
                     <i class="fa-solid fa-file-invoice-dollar mb-1 text-lg"></i>
                     <span class="text-[10px] font-bold">Meu Aluguel</span>
@@ -296,13 +310,11 @@
             errEl.classList.add('hidden');
 
             try {
-                // Requisição JSON/GViz oficial do Google Sheets (100% livre de erros de CSV)
                 const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Erro na planilha");
 
                 const text = await response.text();
-                // Extrai o JSON limpo do retorno do Google
                 const jsonJSON = JSON.parse(text.substring(47, text.length - 2));
                 const rows = jsonJSON.table.rows;
 
@@ -347,14 +359,14 @@
             const vEnergia = parseToNumber(currentHouse.energia);
             const total = vAluguel + vEnergia;
 
-            document.getElementById('disp-endereco').innerText = currentHouse.casa;
-            document.getElementById('disp-aluguel').innerText = formatCurrency(currentHouse.aluguel);
-            document.getElementById('disp-energia').innerText = formatCurrency(currentHouse.energia);
+            document.getElementById('disp-endereco').innerText = currentHouse.casa; //[cite: 1]
+            document.getElementById('disp-aluguel').innerText = formatCurrency(currentHouse.aluguel); //[cite: 1]
+            document.getElementById('disp-energia').innerText = formatCurrency(currentHouse.energia); //[cite: 1]
             document.getElementById('disp-total').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            document.getElementById('prof-nome').innerText = currentHouse.login;
-            document.getElementById('prof-user').innerText = currentHouse.login;
-            document.getElementById('prof-endereco').innerText = currentHouse.casa;
+            document.getElementById('prof-nome').innerText = currentHouse.login; //[cite: 1]
+            document.getElementById('prof-user').innerText = currentHouse.login; //[cite: 1]
+            document.getElementById('prof-endereco').innerText = currentHouse.casa; //[cite: 1]
 
             init3DScene();
         }
@@ -422,13 +434,15 @@ Vencimento: Todo dia 10
             }
         };
 
-        // THREE.JS - CENA 3D DA CASA E POSTE
+        // THREE.JS - CENA 3D DA CASA, POSTE E FIOS ELÉTRICOS FLUINDO
         let scene, camera, renderer, controls;
+        let energyPath, energyDot, energyGlow;
 
         function buildPole() {
             const poleGroup = new THREE.Group();
             const woodMat = new THREE.MeshStandardMaterial({ color: 0x3d3128, roughness: 0.9 });
             const metalMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
 
             const poleGeo = new THREE.CylinderGeometry(0.12, 0.18, 7, 12);
             const pole = new THREE.Mesh(poleGeo, woodMat);
@@ -439,6 +453,14 @@ Vencimento: Todo dia 10
             const arm = new THREE.Mesh(armGeo, metalMat);
             arm.position.set(-6, 5.2, 1);
             poleGroup.add(arm);
+
+            const isoGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.12, 8);
+            const iso1 = new THREE.Mesh(isoGeo, glassMat);
+            iso1.position.set(-6, 5.3, 0.7);
+            const iso2 = new THREE.Mesh(isoGeo, glassMat);
+            iso2.position.set(-6, 5.3, 1.3);
+            poleGroup.add(iso1);
+            poleGroup.add(iso2);
 
             scene.add(poleGroup);
         }
@@ -482,9 +504,40 @@ Vencimento: Todo dia 10
 
             buildPole();
 
+            // Curva dos cabos de energia (Poste -> Casa)
+            energyPath = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-6, 5.3, 0.7),
+                new THREE.Vector3(-3.8, 3.2, 0.9),
+                new THREE.Vector3(-1.8, 2.5, 1.0)
+            ]);
+
+            const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.03, 8, false);
+            const tubeMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.8 });
+            const wireMesh = new THREE.Mesh(tubeGeo, tubeMat);
+            scene.add(wireMesh);
+
+            // Esfera de pulso elétrico fluindo pelo cabo
+            energyDot = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0x00aaff })
+            );
+            energyGlow = new THREE.PointLight(0x00aaff, 2.5, 3.5);
+            energyDot.add(energyGlow);
+            scene.add(energyDot);
+
             function animate() {
                 requestAnimationFrame(animate);
                 controls.update();
+
+                // Animação de fluxo do poste até a casa
+                const speed = 2400;
+                const t = (Date.now() % speed) / speed;
+                const pos = energyPath.getPointAt(t);
+                energyDot.position.copy(pos);
+
+                const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.25;
+                energyDot.scale.setScalar(pulse);
+
                 renderer.render(scene, camera);
             }
             animate();
