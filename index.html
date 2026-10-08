@@ -2,381 +2,455 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal do Inquilino</title>
-    
-    <!-- Configurações PWA / Mobile -->
-    <meta name="theme-color" content="#141824">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Área do Inquilino</title>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Inquilino">
+    <link rel="apple-touch-icon" href="./logo_nova.jpg">
 
+    <!-- Tailwind CSS & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Three.js, GLTFLoader e OrbitControls -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Three.js + Loader + Controls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f",
+          serviceWorkerPath: "sw.js",
+          serviceWorkerParam: { scope: "/" },
+        });
+      });
+    </script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
                     colors: {
-                        'app-bg': '#141824',
-                        'app-green': '#30d158',
-                        'app-red': '#ff453a',
-                        'app-orange': '#ff9e00',
-                        'app-blue': '#0a84ff'
+                        'brand-dark': '#0d1117',
+                        'brand-card': '#161b22',
+                        'brand-accent': '#3fb950',
+                        'brand-blue': '#58a6ff',
+                        'brand-orange': '#ff9e00'
                     }
                 }
             }
         }
     </script>
+
     <style>
-        html, body { touch-action: manipulation; }
-        body { background-color: #141824; color: white; -webkit-tap-highlight-color: transparent; overflow-y: auto; overflow-x: hidden; }
+        /* Trava contra duplo toque e zoom no mobile */
+        html, body {
+            touch-action: pan-x pan-y;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            background-color: #0d1117;
+            color: #f0f6fc;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        * { touch-action: manipulation; }
+
         ::-webkit-scrollbar { display: none; }
 
-        .glass-panel { background: rgba(30, 36, 48, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.25rem; }
+        .glass-box {
+            background: rgba(22, 27, 34, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+        }
 
-        #canvas-container { position: fixed; top: 0; left: 0; right: 0; height: 60vh; z-index: 1; pointer-events: auto; transition: background 1s ease; }
-        .bg-night { background: linear-gradient(to bottom, #0d131d 0%, #141824 100%) !important; }
-        .bg-day { background: linear-gradient(to bottom, #1c2e4a 0%, #141824 100%) !important; }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 52vh;
+            z-index: 1;
+            pointer-events: auto;
+        }
 
-        #content-wrapper { position: relative; z-index: 10; width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-        .hero-spacer { height: 42vh; width: 100%; pointer-events: none; flex-shrink: 0; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
+        #content-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-        .tab-btn { transition: all 0.25s ease; }
-        .tab-btn.active { background: rgba(255, 255, 255, 0.15); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .invoice-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: background 0.2s; }
-        .invoice-item:active { background: rgba(255, 255, 255, 0.05); border-radius: 12px; }
-        .invoice-item:last-child { border-bottom: none; }
+        .hero-spacer {
+            height: 40vh;
+            width: 100%;
+            pointer-events: none;
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a202c; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 20px 24px 34px; z-index: 1001; border-top: 1px solid rgba(255,255,255,0.1); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
-        .modal-pill { width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 20px; }
+        .fade-in { animation: fadeIn 0.35s ease-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(8px); } }
+
+        .spinner-loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-left-color: #3fb950;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    <!-- FUNDO 3D INTERATIVO -->
-    <div id="canvas-container"></div>
+    <!-- TELA DE LOGIN DO INQUILINO -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 transition-opacity duration-300">
+        <div class="mb-8 text-center flex flex-col items-center">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-b from-brand-accent/20 to-transparent p-1 mb-4 border border-brand-accent/30 shadow-[0_0_25px_rgba(63,185,80,0.15)] flex items-center justify-center">
+                <i class="fa-solid fa-house-user text-brand-accent text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-1">Área do Inquilino</h1>
+            <p class="text-xs text-gray-400">Digite seu código/login de acesso</p>
+        </div>
 
-    <!-- DASHBOARD DO INQUILINO -->
-    <div id="dashboard-screen">
-        <div id="content-wrapper">
+        <div class="w-full max-w-xs space-y-4">
+            <input type="text" id="user-input" placeholder="Seu Login (ex: jj)" autocomplete="off" class="w-full bg-[#161b22] border border-white/10 rounded-xl px-5 py-4 text-center text-white placeholder-gray-500 focus:outline-none focus:border-brand-accent transition-colors" onkeypress="if(event.key === 'Enter') autenticarInquilino()">
+            
+            <button id="login-btn" onclick="autenticarInquilino()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black font-extrabold py-4 rounded-xl active:scale-95 transition-all flex justify-center items-center gap-2">
+                <div id="login-spinner" class="spinner-loader border-black/20 border-left-black hidden"></div>
+                <span id="login-btn-text">Entrar na Conta</span>
+            </button>
+            <p id="login-error" class="text-red-400 text-xs text-center font-medium hidden">Login não encontrado na Coluna D.</p>
+        </div>
+    </div>
+
+    <!-- CANVAS 3D (CASA E POSTE) -->
+    <div id="canvas-container" class="hidden"></div>
+
+    <!-- CAMADA DE CONTEÚDO PRINCIPAL -->
+    <div id="app-screen" class="hidden">
+        <div id="content-layer">
             <div class="hero-spacer"></div>
 
-            <!-- VISÃO INÍCIO -->
-            <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+            <!-- VISÃO: ALUGUEL E FATURA -->
+            <main id="view-home" class="flex-1 bg-[#0d1117] rounded-t-3xl p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.8)] pb-28 fade-in relative">
                 
-                <!-- CABEÇALHO DO IMÓVEL -->
-                <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
-                    <div class="w-12 h-12 rounded-2xl bg-app-blue/20 border border-app-blue/30 flex items-center justify-center text-app-blue text-xl">
-                        <i class="fa-solid fa-house-user"></i>
+                <!-- IDENTIFICAÇÃO DO IMÓVEL -->
+                <div class="glass-box p-4 flex items-center gap-3.5 mb-5">
+                    <div class="w-11 h-11 rounded-xl bg-brand-accent/15 border border-brand-accent/30 flex items-center justify-center text-brand-accent text-lg">
+                        <i class="fa-solid fa-location-dot"></i>
                     </div>
                     <div>
-                        <h2 id="client-name" class="text-lg font-bold capitalize leading-tight">Inquilino</h2>
-                        <p class="text-xs text-gray-400 font-medium">Casa 02 - Aluguel & Energia</p>
+                        <h2 id="disp-endereco" class="text-sm font-bold text-white leading-tight">Carregando...</h2>
+                        <p class="text-[11px] text-gray-400 font-medium mt-0.5">Imóvel Locado</p>
                     </div>
-                    <div class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1.5">
+                    <div class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1">
                         <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Ativo
                     </div>
                 </div>
 
-                <!-- ABAS DE NAVEGAÇÃO DE FATURAS -->
-                <div class="flex bg-white/5 rounded-xl p-1 mb-4 border border-white/5">
-                    <button id="tab-pendente" class="tab-btn flex-1 text-sm font-semibold py-2.5 rounded-lg text-gray-400 active" onclick="switchTab('pendente')">A Vencer</button>
-                    <button id="tab-pago" class="tab-btn flex-1 text-sm font-semibold py-2.5 rounded-lg text-gray-400" onclick="switchTab('pago')">Pagas</button>
-                </div>
-
-                <!-- LISTA DE FATURAS -->
-                <div class="glass-panel p-2 bg-[#1a202c]" id="invoice-list-container"></div>
-            </div>
-
-            <!-- VISÃO PERFIL DO INQUILINO -->
-            <div id="profile-view" class="hidden flex-1 bg-[#141824] rounded-t-3xl p-5 pt-8 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center">
-                <div class="w-20 h-20 rounded-full bg-app-orange/20 border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.3)] mb-3 flex items-center justify-center text-app-orange text-3xl">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <h2 id="profile-name-large" class="text-xl font-bold capitalize mb-0.5">Carlos Eduardo</h2>
-                <p class="text-xs text-gray-400 font-medium mb-6">Contrato Vigente • Venc. Dia 10</p>
-
-                <div class="w-full bg-white/5 rounded-2xl p-4 mb-4 border border-white/5 space-y-3.5 text-sm">
-                    <div class="flex justify-between items-center pb-3 border-b border-white/5">
-                        <span class="text-gray-400 text-xs">Imóvel Alugado</span>
-                        <span class="font-semibold text-white">Rua das Flores, nº 120</span>
+                <!-- CARDS DE VALORES -->
+                <div class="space-y-3.5">
+                    
+                    <!-- ALUGUEL -->
+                    <div class="glass-box p-4 flex justify-between items-center border-l-4 border-l-brand-blue">
+                        <div>
+                            <p class="text-xs text-gray-400 font-medium">Aluguel Mensal</p>
+                            <h3 id="disp-aluguel" class="text-xl font-black text-white mt-0.5">R$ 0,00</h3>
+                        </div>
+                        <span class="text-[10px] font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20 px-2.5 py-1 rounded-full uppercase">Fixo</span>
                     </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-white/5">
-                        <span class="text-gray-400 text-xs">Valor Base Aluguel</span>
-                        <span class="font-semibold text-white">R$ 1.200,00</span>
+
+                    <!-- ENERGIA -->
+                    <div class="glass-box p-4 flex justify-between items-center border-l-4 border-l-brand-accent">
+                        <div>
+                            <p class="text-xs text-gray-400 font-medium">Consumo de Energia</p>
+                            <h3 id="disp-energia" class="text-xl font-black text-white mt-0.5">R$ 0,00</h3>
+                        </div>
+                        <span class="text-[10px] font-bold bg-brand-accent/10 text-brand-accent border border-brand-accent/20 px-2.5 py-1 rounded-full uppercase">Energia</span>
                     </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-white/5">
-                        <span class="text-gray-400 text-xs">Telefone de Contato</span>
-                        <span class="font-semibold text-white">(62) 99999-8888</span>
+
+                    <!-- TOTAL -->
+                    <div class="glass-box p-5 bg-gradient-to-br from-[#161b22] to-[#1f2838] border border-white/10 text-center">
+                        <p class="text-xs text-gray-400 font-medium">Total do Mês a Pagar</p>
+                        <h2 id="disp-total" class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-200 mt-1">R$ 0,00</h2>
+                    </div>
+
+                    <button onclick="copiarPix()" class="w-full bg-brand-accent hover:bg-emerald-500 text-black py-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-accent/10">
+                        <i class="fa-solid fa-copy text-base"></i> <span id="pix-btn-text">Copiar Chave PIX</span>
+                    </button>
+                </div>
+            </main>
+
+            <!-- VISÃO: PERFIL DO INQUILINO -->
+            <main id="view-profile" class="hidden flex-1 bg-[#0d1117] rounded-t-3xl p-5 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.8)] pb-28 fade-in flex flex-col items-center">
+                <div class="w-20 h-20 rounded-full bg-brand-blue/15 border-2 border-brand-blue shadow-[0_0_20px_rgba(88,166,255,0.2)] mb-3 flex items-center justify-center text-brand-blue text-3xl mt-2">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <h2 id="prof-nome" class="text-lg font-bold text-white uppercase">Inquilino</h2>
+                <p class="text-xs text-gray-400 font-medium mb-5">Contrato de Locação Ativo</p>
+
+                <div class="w-full glass-box p-4 mb-4 space-y-3 text-xs">
+                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
+                        <span class="text-gray-400">Usuário de Acesso (Coluna D)</span>
+                        <span id="prof-user" class="font-semibold text-brand-accent">---</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
+                        <span class="text-gray-400">Endereço do Imóvel</span>
+                        <span id="prof-endereco" class="font-semibold text-white">---</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-2.5 border-b border-white/5">
+                        <span class="text-gray-400">Vencimento Mensal</span>
+                        <span class="font-semibold text-white">Todo dia 10</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-400 text-xs">Status do Contrato</span>
-                        <span class="text-app-green font-bold text-xs flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-check"></i> Em Dia
+                        <span class="text-gray-400">Status do Contrato</span>
+                        <span class="text-brand-accent font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i> Vigente
                         </span>
                     </div>
                 </div>
 
-                <div class="w-full bg-white/5 rounded-2xl p-4 border border-white/5">
-                    <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Suporte & Locador</h3>
-                    <a href="https://wa.me/5562999998888" target="_blank" class="w-full bg-white/10 hover:bg-white/15 text-white rounded-xl py-3 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors">
-                        <i class="fa-brands fa-whatsapp text-app-green text-base"></i> Falar com o Proprietário
-                    </a>
-                </div>
-            </div>
+                <div class="w-full space-y-2.5 mb-6">
+                    <button onclick="downloadContrato()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-3.5 px-4 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+                        <i class="fa-solid fa-file-pdf text-red-400 text-base"></i> Baixar Contrato de Aluguel (PDF)
+                    </button>
 
-            <!-- NAVEGAÇÃO INFERIOR -->
-            <nav class="fixed bottom-0 w-full max-w-[430px] bg-[#141824] border-t border-white/5 p-3 pb-6 flex justify-around items-center z-30">
-                <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-white transition-colors w-1/2">
-                    <i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium">Faturas</span>
+                    <button onclick="solicitarNotificacao()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-xl py-3.5 px-4 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+                        <i class="fa-solid fa-bell text-brand-accent text-base"></i> Ativar Notificações de Cobrança
+                    </button>
+                </div>
+
+                <button onclick="logout()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3.5 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mt-auto">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
                 </button>
-                <div class="w-[1px] h-8 bg-white/10"></div>
+            </main>
+
+            <!-- NAVEGAÇÃO INFERIOR FIXA -->
+            <nav class="fixed bottom-0 w-full max-w-[440px] bg-[#0d1117] border-t border-white/10 p-3 pb-6 flex justify-around items-center z-30">
+                <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-brand-accent transition-colors w-1/2">
+                    <i class="fa-solid fa-file-invoice-dollar mb-1 text-lg"></i>
+                    <span class="text-[10px] font-bold">Meu Aluguel</span>
+                </button>
+                <div class="w-[1px] h-7 bg-white/10"></div>
                 <button id="nav-profile" onclick="switchNav('profile')" class="flex flex-col items-center text-gray-500 transition-colors w-1/2">
-                    <i class="fa-regular fa-user mb-1 text-lg"></i><span class="text-[10px] font-medium">Perfil Inquilino</span>
+                    <i class="fa-regular fa-user mb-1 text-lg"></i>
+                    <span class="text-[10px] font-bold">Perfil & Contrato</span>
                 </button>
             </nav>
         </div>
     </div>
 
-    <!-- MODAL DETALHADO DA FATURA -->
-    <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
-    <div class="bottom-sheet" id="bottom-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 id="modal-title" class="text-xl font-bold">Fatura Mês</h3>
-            <div class="flex items-center gap-4">
-                <span id="modal-status" class="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">STATUS</span>
-                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:text-white active:scale-90 transition-transform">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- DETALHAMENTO: ALUGUEL + ENERGIA -->
-        <div class="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4 space-y-2.5 text-sm">
-            <div class="flex justify-between items-center text-gray-300">
-                <span>Aluguel Mensal:</span>
-                <span id="modal-aluguel" class="font-semibold text-white">R$ 1.200,00</span>
-            </div>
-            <div class="flex justify-between items-center text-gray-300">
-                <span>Energia do Mês:</span>
-                <span id="modal-energia" class="font-semibold text-white">R$ 180,00</span>
-            </div>
-            <div class="border-t border-white/10 my-2 pt-2 flex justify-between items-center text-gray-400">
-                <span>Vencimento:</span>
-                <span id="modal-vencimento" class="text-white font-medium">10/10/2026</span>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-4 mb-5 text-center">
-            <h4 class="text-xs text-gray-400 font-medium mb-1">Valor Total a Pagar</h4>
-            <h2 id="modal-valor-final" class="text-4xl font-black bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-transparent bg-clip-text tracking-tighter">R$ 1.380,00</h2>
-        </div>
-
-        <div id="modal-paid-msg" class="hidden text-center text-app-green font-bold p-4 bg-app-green/10 rounded-xl border border-app-green/20 mb-3">
-            <i class="fa-solid fa-circle-check"></i> Esta fatura já está paga!
-        </div>
-
-        <div id="modal-payment-section" class="space-y-3">
-            <button onclick="copyPix()" class="w-full bg-app-green/15 text-app-green border border-app-green/30 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                <i class="fa-solid fa-copy text-lg"></i> <span id="pix-btn-text">Copiar Código PIX</span>
-            </button>
-
-            <button onclick="downloadFaturaPDF()" class="w-full bg-white/10 text-white border border-white/15 rounded-xl py-3.5 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform text-xs">
-                <i class="fa-solid fa-file-arrow-down text-base text-app-blue"></i> Download da Fatura (PDF)
-            </button>
-        </div>
-    </div>
-
-    <!-- LÓGICA PRINCIPAL -->
     <script>
-        const PIX_STRING = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
+        const SHEET_ID = '1b-hPE6fom1F94MDmek3LeWL7g4O4rTlb_ruZjbfer7s';
+        const SHEET_NAME = 'casas';
+        const PIX_KEY = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
 
-        // Dados de exemplo de faturas do inquilino
-        const mockInvoices = [
-            { mes: "Outubro 2026", vencimento: "10/10/2026", aluguel: "R$ 1.200,00", energia: "R$ 185,40", total: "R$ 1.385,40", status: "pendente" },
-            { mes: "Setembro 2026", vencimento: "10/09/2026", aluguel: "R$ 1.200,00", energia: "R$ 162,10", total: "R$ 1.362,10", status: "pago" },
-            { mes: "Agosto 2026", vencimento: "10/08/2026", aluguel: "R$ 1.200,00", energia: "R$ 178,00", total: "R$ 1.378,00", status: "pago" }
-        ];
+        let currentHouse = null;
 
-        let currentFilteredInvoices = [];
-        let activeTab = 'pendente'; 
-        let selectedInvoice = null;
+        // Trava de gestos de zoom no iOS
+        document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+        document.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
 
-        window.onload = () => {
-            switchTab('pendente');
-            init3DHouse();
-        };
+        function parseToNumber(val) {
+            if (val === null || val === undefined) return 0;
+            let numStr = val.toString().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+            let num = parseFloat(numStr);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatCurrency(val) {
+            let num = parseToNumber(val);
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        async function autenticarInquilino() {
+            const input = document.getElementById('user-input').value.trim().toLowerCase();
+            const errEl = document.getElementById('login-error');
+            const btnSpinner = document.getElementById('login-spinner');
+            const btnText = document.getElementById('login-btn-text');
+
+            if (!input) return;
+
+            btnSpinner.classList.remove('hidden');
+            btnText.innerText = 'Buscando...';
+            errEl.classList.add('hidden');
+
+            try {
+                // Requisição JSON/GViz oficial do Google Sheets (100% livre de erros de CSV)
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Erro na planilha");
+
+                const text = await response.text();
+                // Extrai o JSON limpo do retorno do Google
+                const jsonJSON = JSON.parse(text.substring(47, text.length - 2));
+                const rows = jsonJSON.table.rows;
+
+                let matched = null;
+
+                for (let row of rows) {
+                    const c = row.c;
+                    if (!c) continue;
+                    
+                    const casa = c[0] ? (c[0].v || '') : '';
+                    const aluguel = c[1] ? (c[1].v || 0) : 0;
+                    const energia = c[2] ? (c[2].v || 0) : 0;
+                    const login = c[3] ? (c[3].v || '').toString().trim().toLowerCase() : '';
+
+                    if (login === input) {
+                        matched = { casa, aluguel, energia, login: c[3].v };
+                        break;
+                    }
+                }
+
+                if (!matched) throw new Error("Usuário não encontrado");
+
+                currentHouse = matched;
+                localStorage.setItem('inquilino_login', input);
+                carregarDashboard();
+
+            } catch (err) {
+                console.error(err);
+                errEl.classList.remove('hidden');
+            } finally {
+                btnSpinner.classList.add('hidden');
+                btnText.innerText = 'Entrar na Conta';
+            }
+        }
+
+        function carregarDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('canvas-container').classList.remove('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+
+            const vAluguel = parseToNumber(currentHouse.aluguel);
+            const vEnergia = parseToNumber(currentHouse.energia);
+            const total = vAluguel + vEnergia;
+
+            document.getElementById('disp-endereco').innerText = currentHouse.casa;
+            document.getElementById('disp-aluguel').innerText = formatCurrency(currentHouse.aluguel);
+            document.getElementById('disp-energia').innerText = formatCurrency(currentHouse.energia);
+            document.getElementById('disp-total').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            document.getElementById('prof-nome').innerText = currentHouse.login;
+            document.getElementById('prof-user').innerText = currentHouse.login;
+            document.getElementById('prof-endereco').innerText = currentHouse.casa;
+
+            init3DScene();
+        }
 
         function switchNav(view) {
-            const homeView = document.getElementById('home-view');
-            const profileView = document.getElementById('profile-view');
-            const navHome = document.getElementById('nav-home');
-            const navProfile = document.getElementById('nav-profile');
+            const vHome = document.getElementById('view-home');
+            const vProfile = document.getElementById('view-profile');
+            const nHome = document.getElementById('nav-home');
+            const nProfile = document.getElementById('nav-profile');
 
             if (view === 'home') {
-                homeView.classList.remove('hidden');
-                profileView.classList.add('hidden');
-                navHome.classList.replace('text-gray-500', 'text-white');
-                navProfile.classList.replace('text-white', 'text-gray-500');
-            } else if (view === 'profile') {
-                homeView.classList.add('hidden');
-                profileView.classList.remove('hidden');
-                navHome.classList.replace('text-white', 'text-gray-500');
-                navProfile.classList.replace('text-gray-500', 'text-white');
-            }
-        }
-
-        function switchTab(tabType) {
-            activeTab = tabType;
-            document.getElementById('tab-pendente').classList.toggle('active', tabType === 'pendente');
-            document.getElementById('tab-pago').classList.toggle('active', tabType === 'pago');
-            
-            const container = document.getElementById('invoice-list-container');
-            container.innerHTML = '';
-            currentFilteredInvoices = mockInvoices.filter(item => item.status === activeTab);
-
-            if (currentFilteredInvoices.length === 0) {
-                const msg = activeTab === 'pendente' ? '🎉 Nenhuma fatura a vencer.' : 'Nenhuma fatura paga no histórico.';
-                container.innerHTML = `<div class="p-6 text-center text-sm text-gray-500">${msg}</div>`;
-                return;
-            }
-
-            currentFilteredInvoices.forEach((item, index) => {
-                const isPaid = item.status === 'pago';
-                const colorClass = isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20';
-                const label = isPaid ? 'Pago' : 'A Vencer';
-
-                container.innerHTML += `
-                    <div class="invoice-item p-4 flex justify-between items-center" onclick="openModal(${index})">
-                        <div>
-                            <p class="font-bold text-white capitalize text-base">${item.mes}</p>
-                            <p class="text-xs text-gray-400 mt-1">Vencimento: <span class="font-semibold text-white">${item.vencimento}</span></p>
-                            <p class="text-[10px] text-app-orange font-bold mt-2 tracking-wider">VER DETALHES ➔</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xl font-black text-white leading-none tracking-tight mb-2">${item.total}</p>
-                            <span class="text-[10px] font-bold px-2.5 py-1 rounded border uppercase ${colorClass}">${label}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function openModal(index) {
-            selectedInvoice = currentFilteredInvoices[index];
-            const isPaid = selectedInvoice.status === 'pago';
-
-            document.getElementById('modal-title').innerText = `Fatura ${selectedInvoice.mes}`;
-            const badge = document.getElementById('modal-status');
-            badge.innerText = isPaid ? 'PAGO' : 'A VENCER';
-            badge.className = `text-[10px] font-bold px-2 py-1 rounded border uppercase ${isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20'}`;
-
-            document.getElementById('modal-aluguel').innerText = selectedInvoice.aluguel;
-            document.getElementById('modal-energia').innerText = selectedInvoice.energia;
-            document.getElementById('modal-vencimento').innerText = selectedInvoice.vencimento;
-            document.getElementById('modal-valor-final').innerText = selectedInvoice.total;
-            
-            if(isPaid) {
-                document.getElementById('modal-paid-msg').classList.remove('hidden');
+                vHome.classList.remove('hidden');
+                vProfile.classList.add('hidden');
+                nHome.className = "flex flex-col items-center text-brand-accent transition-colors w-1/2";
+                nProfile.className = "flex flex-col items-center text-gray-500 transition-colors w-1/2";
             } else {
-                document.getElementById('modal-paid-msg').classList.add('hidden');
-                document.getElementById('pix-btn-text').innerText = "Copiar Código PIX";
+                vHome.classList.add('hidden');
+                vProfile.classList.remove('hidden');
+                nHome.className = "flex flex-col items-center text-gray-500 transition-colors w-1/2";
+                nProfile.className = "flex flex-col items-center text-brand-blue transition-colors w-1/2";
             }
-
-            document.getElementById('modal-overlay').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('modal-overlay').style.opacity = '1';
-                document.getElementById('bottom-sheet').style.transform = 'translateY(0)';
-            }, 10);
         }
 
-        function closeModal() {
-            document.getElementById('bottom-sheet').style.transform = 'translateY(100%)';
-            document.getElementById('modal-overlay').style.opacity = '0';
-            setTimeout(() => { document.getElementById('modal-overlay').style.display = 'none'; }, 300);
-        }
-
-        function copyPix() {
-            navigator.clipboard.writeText(PIX_STRING).then(() => {
+        function copiarPix() {
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
                 document.getElementById('pix-btn-text').innerText = "Copiado! Abra seu banco";
-                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Código PIX"; }, 3000);
+                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Chave PIX"; }, 3000);
             });
         }
 
-        function downloadFaturaPDF() {
-            if(!selectedInvoice) return;
-            const content = `==================================
-           FATURA DE ALUGUEL
+        function downloadContrato() {
+            const txt = `==================================
+CONTRATO DE LOCAÇÃO DE IMÓVEL
 ==================================
-Mês Referência: ${selectedInvoice.mes}
-Vencimento: ${selectedInvoice.vencimento}
-----------------------------------
-Aluguel: ${selectedInvoice.aluguel}
-Energia: ${selectedInvoice.energia}
-----------------------------------
-TOTAL A PAGAR: ${selectedInvoice.total}
-Status: ${selectedInvoice.status.toUpperCase()}
+Usuário Inquilino: ${currentHouse.login}
+Imóvel: ${currentHouse.casa}
+Valor Base Aluguel: ${formatCurrency(currentHouse.aluguel)}
+Vencimento: Todo dia 10
 ==================================`;
-            
-            const blob = new Blob([content], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Fatura_${selectedInvoice.mes.replace(' ', '_')}.txt`;
-            link.click();
+            const blob = new Blob([txt], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Contrato_${currentHouse.login}.txt`;
+            a.click();
         }
 
-        // MOTOR 3D COM A CASA GLB E POSTE DE ENERGIA
-        let scene, camera, renderer, ambientLight, controls;
-        let energyPath, energyDot, energyGlow;
+        function solicitarNotificacao() {
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(function(OneSignal) {
+                    OneSignal.Notifications.requestPermission();
+                });
+            }
+        }
 
-        function buildUtilityPole() {
+        function logout() {
+            localStorage.removeItem('inquilino_login');
+            window.location.reload();
+        }
+
+        window.onload = () => {
+            const saved = localStorage.getItem('inquilino_login');
+            if (saved) {
+                document.getElementById('user-input').value = saved;
+                autenticarInquilino();
+            }
+        };
+
+        // THREE.JS - CENA 3D DA CASA E POSTE
+        let scene, camera, renderer, controls;
+
+        function buildPole() {
             const poleGroup = new THREE.Group();
-            const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a3f35, roughness: 0.8 });
-            const metalMat = new THREE.MeshStandardMaterial({ color: 0x777777, metalness: 0.7, roughness: 0.3 });
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.1 });
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x3d3128, roughness: 0.9 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8 });
 
-            const poleGeo = new THREE.CylinderGeometry(0.14, 0.20, 7.5, 12);
-            const poleMesh = new THREE.Mesh(poleGeo, poleMat);
-            poleMesh.position.set(-6.5, 2.0, 1.5);
-            poleGroup.add(poleMesh);
+            const poleGeo = new THREE.CylinderGeometry(0.12, 0.18, 7, 12);
+            const pole = new THREE.Mesh(poleGeo, woodMat);
+            pole.position.set(-6, 2, 1);
+            poleGroup.add(pole);
 
-            const armGeo = new THREE.BoxGeometry(0.1, 0.1, 1.0);
-            const armMesh = new THREE.Mesh(armGeo, metalMat);
-            armMesh.position.set(-6.5, 5.4, 1.5);
-            poleGroup.add(armMesh);
-
-            const isoGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 8);
-            const iso1 = new THREE.Mesh(isoGeo, glassMat);
-            iso1.position.set(-6.5, 5.52, 1.1);
-            const iso2 = new THREE.Mesh(isoGeo, glassMat);
-            iso2.position.set(-6.5, 5.52, 1.9);
-            poleGroup.add(iso1);
-            poleGroup.add(iso2);
+            const armGeo = new THREE.BoxGeometry(0.08, 0.08, 0.9);
+            const arm = new THREE.Mesh(armGeo, metalMat);
+            arm.position.set(-6, 5.2, 1);
+            poleGroup.add(arm);
 
             scene.add(poleGroup);
         }
 
-        function init3DHouse() {
+        function init3DScene() {
             const container = document.getElementById('canvas-container');
-            if(container.children.length > 0) return; 
+            if (container.children.length > 0) return;
 
             scene = new THREE.Scene();
-            const aspect = container.clientWidth / container.clientHeight;
-            
-            camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
-            camera.position.set(-1.0, 3.5, 16.0);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(-1, 3.5, 15);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
@@ -386,69 +460,31 @@ Status: ${selectedInvoice.status.toUpperCase()}
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2;
-            controls.minDistance = 8;
-            controls.maxDistance = 25;
-            controls.target.set(-0.5, 1.0, 0);
+            controls.maxPolarAngle = Math.PI / 2.1;
+            controls.minDistance = 6;
+            controls.maxDistance = 22;
+            controls.target.set(-0.5, 1, 0);
 
-            ambientLight = new THREE.AmbientLight(0xffffff, 0.9); 
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
             scene.add(ambientLight);
-            
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); 
-            dirLight.position.set(2, 12, 10); 
-            scene.add(dirLight);
 
-            // Carregamento do seu modelo 'casa.glb'
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
+            sunLight.position.set(5, 12, 8);
+            scene.add(sunLight);
+
             const loader = new THREE.GLTFLoader();
             loader.load('./casa.glb', (gltf) => {
-                const houseModel = gltf.scene;
-                houseModel.position.set(0, -1.2, 0);
-                houseModel.scale.set(0.85, 0.85, 0.85);
-                scene.add(houseModel);
-            }, undefined, (error) => {
-                console.error('Erro ao carregar o modelo casa.glb:', error);
+                const house = gltf.scene;
+                house.position.set(0, -1.2, 0);
+                house.scale.set(0.85, 0.85, 0.85);
+                scene.add(house);
             });
 
-            buildUtilityPole();
-
-            // Fio de Energia Conectando o Poste à Casa
-            energyPath = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-6.5, 5.5, 1.1),
-                new THREE.Vector3(-4.2, 3.3, 1.15),
-                new THREE.Vector3(-1.8, 2.5, 1.1)
-            ]);
-
-            const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
-            const tubeMaterial = new THREE.MeshBasicMaterial({
-                color: 0x00aaff,
-                transparent: true,
-                opacity: 0.85
-            });
-            const wireMesh = new THREE.Mesh(tubeGeo, tubeMaterial);
-            scene.add(wireMesh);
-
-            // Partícula de Energia Fluindo
-            energyDot = new THREE.Mesh(
-                new THREE.SphereGeometry(0.14, 16, 16),
-                new THREE.MeshBasicMaterial({ color: 0x00aaff })
-            );
-            energyGlow = new THREE.PointLight(0x00aaff, 3.0, 4.0);
-            energyDot.add(energyGlow);
-            scene.add(energyDot);
+            buildPole();
 
             function animate() {
                 requestAnimationFrame(animate);
                 controls.update();
-                
-                // Animação contínua da luz do cabo
-                const speed = 2500;
-                const t = (Date.now() % speed) / speed;
-                const pos = energyPath.getPointAt(t);
-                energyDot.position.copy(pos);
-                
-                const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.2;
-                energyDot.scale.setScalar(pulse);
-
                 renderer.render(scene, camera);
             }
             animate();
