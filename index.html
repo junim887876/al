@@ -125,9 +125,34 @@
             animation: spin 0.7s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Container do vídeo de introdução */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background-color: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+        }
+
+        #splash-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body class="antialiased">
+
+    <!-- TELA DE VÍDEO DE ENTRADA -->
+    <div id="splash-screen">
+        <video id="splash-video" autoplay muted playsinline preload="auto">
+            <source src="App_logo_animation_request_20261008193534.mp4" type="video/mp4">
+        </video>
+    </div>
 
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#0d1117] flex flex-col justify-center items-center p-6 safe-padding-top safe-padding-bottom transition-opacity duration-300">
         <div class="mb-8 text-center flex flex-col items-center">
@@ -270,6 +295,37 @@
     </div>
 
     <script>
+        // Lógica de Splash Screen do Vídeo de Entrada
+        document.addEventListener('DOMContentLoaded', () => {
+            const splashScreen = document.getElementById('splash-screen');
+            const splashVideo = document.getElementById('splash-video');
+
+            function finishSplash() {
+                if (!splashScreen || splashScreen.style.display === 'none') return;
+                splashScreen.style.opacity = '0';
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 600);
+            }
+
+            if (splashVideo) {
+                // Tenta dar play automaticamente
+                splashVideo.play().catch(() => {
+                    // Caso o navegador bloqueie o autoplay, finaliza a introdução
+                    finishSplash();
+                });
+
+                // Quando o vídeo terminar, encerra com fade-out fluido
+                splashVideo.addEventListener('ended', finishSplash);
+                splashVideo.addEventListener('error', finishSplash);
+
+                // Timeout de segurança caso o vídeo falhe ao carregar
+                setTimeout(finishSplash, 8000);
+            } else {
+                finishSplash();
+            }
+        });
+
         const SHEET_ID = '1b-hPE6fom1F94MDmek3LeWL7g4O4rTlb_ruZjbfer7s';
         const SHEET_NAME = 'casas';
         const PIX_KEY = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
