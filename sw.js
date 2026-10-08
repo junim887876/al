@@ -1,7 +1,6 @@
-// OneSignal Web Push SDK Service Worker
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'inquilino-app-v3';
+const CACHE_NAME = 'inquilino-pwa-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,17 +8,13 @@ const ASSETS_TO_CACHE = [
   './casa.glb'
 ];
 
-// Instalação do Service Worker e Caching dos arquivos estáticos
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
 
-// Ativação e Limpeza de caches antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -31,7 +26,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Interceptação de Requisições (Offline Support)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
